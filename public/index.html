@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MeetScribe — live meeting notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">MeetScribe</span>
+        <span class="brand-tagline">listens, writes, remembers</span>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab-btn is-active" data-tab="record" role="tab">Record</button>
+        <button class="tab-btn" data-tab="upload" role="tab">Upload</button>
+        <button class="tab-btn" data-tab="library" role="tab">Library</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- ============ TAB: RECORD ============ -->
+      <section id="tab-record" class="tab-panel is-active">
+
+        <!-- Idle: before a session starts -->
+        <div id="recordIdle">
+          <div class="hero">
+            <h1>Your meeting, <em>already written up</em>.</h1>
+            <p>Start recording and MeetScribe transcribes as people speak, keeping a running summary and action list that updates while the meeting is still going.</p>
+          </div>
+
+          <div class="start-panel">
+            <label for="meetingTitle">Meeting title <span class="optional">(optional)</span></label>
+            <input type="text" id="meetingTitle" placeholder="Weekly sync, client call, lecture..." autocomplete="off" />
+
+            <label for="langSelect">Spoken language</label>
+            <select id="langSelect">
+              <option value="en-US" selected>English (US)</option>
+              <option value="en-GB">English (UK)</option>
+              <option value="ro-RO">Romanian</option>
+              <option value="es-ES">Spanish</option>
+              <option value="fr-FR">French</option>
+              <option value="de-DE">German</option>
+              <option value="it-IT">Italian</option>
+            </select>
+
+            <button id="startBtn" class="btn-primary btn-record">Start recording</button>
+            <p id="supportWarning" class="warning-msg" hidden></p>
+            <p class="hint">Your microphone audio is transcribed by your browser. Only the resulting text is sent to the server.</p>
+          </div>
+        </div>
+
+        <!-- Active: during a session -->
+        <div id="recordActive" hidden>
+          <div class="session-bar">
+            <div class="session-meta">
+              <span class="rec-dot" id="recDot"></span>
+              <span id="sessionTitle" class="session-title">Recording</span>
+              <span id="sessionTimer" class="session-timer">00:00</span>
+            </div>
+            <div class="session-actions">
+              <button id="refreshSummaryBtn" class="btn-ghost">Refresh summary</button>
+              <button id="stopBtn" class="btn-stop">Stop &amp; finish</button>
+            </div>
+          </div>
+
+          <div class="speaker-bar">
+            <span class="speaker-bar-label">Speaking now:</span>
+            <div id="speakerButtons" class="speaker-buttons"></div>
+            <button id="addSpeakerBtn" class="btn-tiny">+ Add speaker</button>
+          </div>
+
+          <div class="live-grid">
+            <section class="transcript-pane">
+              <h2 class="pane-title">Transcript</h2>
+              <div id="transcriptList" class="transcript-list"></div>
+              <p id="interimLine" class="interim-line"></p>
+            </section>
+
+            <aside class="summary-pane">
+              <div class="pane-head">
+                <h2 class="pane-title">Live summary</h2>
+                <span id="summaryStatus" class="summary-status"></span>
+              </div>
+              <div id="liveSummary" class="summary-body">
+                <p class="placeholder">The summary appears once there's enough conversation to work with.</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: UPLOAD ============ -->
+      <section id="tab-upload" class="tab-panel">
+        <div class="hero">
+          <h1>Already have a <em>recording</em>?</h1>
+          <p>Upload an audio file and MeetScribe transcribes it with automatic speaker detection, then writes up the summary and action items.</p>
+        </div>
+
+        <div class="upload-wrap">
+          <label for="uploadInput" class="dropzone" id="uploadDropzone">
+            <span class="dropzone-title">Drop an audio file here</span>
+            <span class="dropzone-sub">mp3, m4a, wav, webm, mp4 — up to 25 MB · or a .txt / .vtt transcript</span>
+            <input type="file" id="uploadInput" accept=".mp3,.m4a,.wav,.webm,.mp4,.mpeg,.mpga,.txt,.vtt,.srt,audio/*,text/plain" hidden />
+          </label>
+          <p id="uploadFileName" class="hint"></p>
+
+          <label class="checkbox-inline">
+            <input type="checkbox" id="diarizeCb" checked />
+            Detect who is speaking (speaker diarization)
+          </label>
+
+          <button id="uploadBtn" class="btn-primary">Transcribe &amp; summarize</button>
+          <p id="uploadError" class="error-msg" hidden></p>
+          <p id="transcriptionNotice" class="notice-msg" hidden></p>
+
+          <div id="uploadLoading" class="loading-state" hidden>
+            <div class="spinner" aria-hidden="true"></div>
+            <p id="uploadLoadingText">Transcribing — this can take a minute for longer recordings...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: LIBRARY ============ -->
+      <section id="tab-library" class="tab-panel">
+        <div class="panel-header">
+          <h2>Meeting library</h2>
+          <p>Every meeting, searchable across transcripts, summaries and action items.</p>
+        </div>
+
+        <div class="search-row">
+          <input type="search" id="searchInput" placeholder="Search meetings, decisions, who said what..." autocomplete="off" />
+        </div>
+
+        <div id="libraryEmpty" class="empty-state">
+          <p>No meetings yet. Record one or upload a recording to get started.</p>
+        </div>
+        <ul id="meetingList" class="meeting-list"></ul>
+      </section>
+
+      <!-- ============ MEETING DETAIL (overlay) ============ -->
+      <section id="meetingDetail" class="detail-view" hidden>
+        <button id="backBtn" class="btn-back">← Back to library</button>
+        <div id="detailBody"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
